@@ -7,8 +7,11 @@ import (
 )
 
 type Coord struct {
-	Lat, Long float64
+	Long, Lat float64
 }
+
+// Longitude: Perpendicular to equator (X axis)
+// Latitude: Parallel to equator (Y axis)
 
 type GridCell struct {
 	X, Y float64
@@ -19,6 +22,23 @@ type Grid struct {
 	Cells        []GridCell
 	SizeX, SizeY float64
 	XRes, YRes         int
+}
+
+func (grid Grid) GetCoords() []Coord {
+	var out []Coord
+
+	// Traverse columns left to right
+	for i := 0; i < grid.XRes; i += 1{
+		// Scan down the columns
+		for j := i; j < len(grid.Cells); j += grid.XRes  {
+			if grid.Cells[j].Fill == true {
+				out = append(out, Coord{grid.Cells[j].X, grid.Cells[j].Y})
+				break
+			}
+		}
+	}
+
+	return out
 }
 
 func main() {
@@ -61,6 +81,10 @@ func main() {
 	pretty.Println("Cells: ----")
 	pretty.Println(grid)
 
+	coords := grid.GetCoords()
+
+	pretty.Println(coords)
+
 	// 1. Generate grid from coordinates
 	// 2. Populate grid from coordinates
 	// 3. Calculate extremities
@@ -85,35 +109,35 @@ func populateGrid(grid Grid, coords []Coord) Grid {
 
 func isCell(coord Coord, cell GridCell, sizeX float64, sizeY float64, endRow, endCol bool) bool {
 	if endCol && endRow {
-		return coord.Long >= cell.Y && coord.Lat >= cell.X
+		return coord.Lat >= cell.Y && coord.Long >= cell.X
 	}
 
 	if endRow {
-		return coord.Lat >= cell.X &&
-			coord.Long >= cell.Y &&
-			coord.Long < (cell.Y + sizeY)
+		return coord.Long >= cell.X &&
+			coord.Lat >= cell.Y &&
+			coord.Lat < (cell.Y + sizeY)
 	}
 
 	if endCol {
-		return coord.Lat >= cell.X &&
-			coord.Lat < (cell.X + sizeX) &&
-			coord.Long >= cell.Y
+		return coord.Long >= cell.X &&
+			coord.Long < (cell.X + sizeX) &&
+			coord.Lat >= cell.Y
 	}
 
-	return coord.Lat >= cell.X &&
-		coord.Lat < (cell.X + sizeX) &&
-		coord.Long >= cell.Y &&
-		coord.Long < (cell.Y + sizeY)
+	return coord.Long >= cell.X &&
+		coord.Long < (cell.X + sizeX) &&
+		coord.Lat >= cell.Y &&
+		coord.Lat < (cell.Y + sizeY)
 }
 
 func generateGrid(leftTop Coord, rightBottom Coord, xRes int, yRes int) Grid {
 	var out []GridCell
 
-	sizeX := math.Ceil(rightBottom.Lat - leftTop.Lat) / float64(xRes)
-	sizeY := math.Ceil(rightBottom.Long - leftTop.Long) / float64(yRes)
+	sizeX := math.Ceil(rightBottom.Long- leftTop.Long) / float64(xRes)
+	sizeY := math.Ceil(rightBottom.Lat- leftTop.Lat) / float64(yRes)
 
-	for j := leftTop.Long; j < float64(yRes); j += sizeY {
-		for i := leftTop.Lat; i < float64(xRes); i += sizeX {
+	for j := leftTop.Lat; j < float64(yRes); j += sizeY {
+		for i := leftTop.Long; i < float64(xRes); i += sizeX {
 			out = append(out, GridCell{
 				X: i,
 				Y: j,
@@ -134,20 +158,20 @@ func calculateGridLimits(coords []Coord) (Coord, Coord) {
 	leftTop := coords[0]
 	rightBottom := coords[0]
 	for _, value := range coords {
-		if value.Lat < leftTop.Lat {
-			leftTop.Lat = value.Lat
-		}
-
 		if value.Long < leftTop.Long {
 			leftTop.Long = value.Long
 		}
 
-		if value.Lat > rightBottom.Lat {
-			rightBottom.Lat = value.Lat
+		if value.Lat < leftTop.Lat {
+			leftTop.Lat = value.Lat
 		}
 
 		if value.Long > rightBottom.Long {
 			rightBottom.Long = value.Long
+		}
+
+		if value.Lat > rightBottom.Lat {
+			rightBottom.Lat = value.Lat
 		}
 	}
 
