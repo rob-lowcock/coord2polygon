@@ -1,6 +1,5 @@
 package main
 
-import "fmt"
 import (
 	"github.com/kr/pretty"
 	"math"
@@ -88,16 +87,16 @@ func main() {
 	// 1. Generate grid from coordinates
 	// 2. Populate grid from coordinates
 	// 3. Calculate extremities
-
-	fmt.Println("Hello world")
 }
 func populateGrid(grid Grid, coords []Coord) Grid {
 	out := grid.Cells
 
 
 	for _, value := range coords {
+
+
 		for k, cell := range grid.Cells {
-			if isCell(value, cell, grid.SizeX, grid.SizeY, (k + 1 % grid.XRes) == 0, (k + 1) >= len(grid.Cells) - grid.YRes) {
+			if isCell(value, cell, grid.SizeX, grid.SizeY, (k + 1) % grid.XRes == 0, (k + 1) >= len(grid.Cells) - grid.YRes) {
 				out[k].Fill = true
 			}
 		}
@@ -108,16 +107,19 @@ func populateGrid(grid Grid, coords []Coord) Grid {
 }
 
 func isCell(coord Coord, cell GridCell, sizeX float64, sizeY float64, endRow, endCol bool) bool {
+	// If this cell is at the end of the column and the end of the row(i.e. it's the last cell)
 	if endCol && endRow {
 		return coord.Lat >= cell.Y && coord.Long >= cell.X
 	}
 
+	// If this cell is at the end of a row
 	if endRow {
 		return coord.Long >= cell.X &&
 			coord.Lat >= cell.Y &&
 			coord.Lat < (cell.Y + sizeY)
 	}
 
+	// If this cell is at the end of a column
 	if endCol {
 		return coord.Long >= cell.X &&
 			coord.Long < (cell.X + sizeX) &&
