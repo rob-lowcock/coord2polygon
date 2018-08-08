@@ -29,9 +29,53 @@ func (grid Grid) GetCoords() []Coord {
 	// Traverse columns left to right
 	for i := 0; i < grid.XRes; i += 1{
 		// Scan down the columns
-		for j := i; j < len(grid.Cells); j += grid.XRes  {
+		for j := i; j < len(grid.Cells)/2; j += grid.XRes  {
 			if grid.Cells[j].Fill == true {
 				out = append(out, Coord{grid.Cells[j].X, grid.Cells[j].Y})
+				break
+			}
+		}
+	}
+
+	// Traverse the rows top to bottom
+	for i := 0; i < grid.YRes; i += 1 {
+		// Scan backwards through the rows
+		limit := (i * grid.XRes) + (grid.XRes / 2)
+
+		for j := ((i + 1) * grid.XRes) - 1; j >= limit; j-- {
+			if grid.Cells[j].Fill == true {
+				coord := Coord{grid.Cells[j].X, grid.Cells[j].Y}
+				if !inSlice(out, coord) {
+					out = append(out, coord)
+				}
+				break
+			}
+		}
+	}
+
+	// Traverse the columns right to left
+	for i := len(grid.Cells) - 1; i >= len(grid.Cells) - grid.XRes; i-- {
+		// Scan the columns bottom to top
+		for j := i; j > i/2; j -= grid.XRes {
+			if grid.Cells[j].Fill == true {
+				coord := Coord{grid.Cells[j].X, grid.Cells[j].Y}
+				if !inSlice(out, coord) {
+					out = append(out, coord)
+				}
+				break
+			}
+		}
+	}
+	
+	// Finally, traverse the rows bottom to top
+	for i := len(grid.Cells) - grid.XRes; i >= 0; i -= grid.XRes {
+		// Scan through the rows
+		for j := i; j < i + (grid.XRes/2); j++ {
+			if grid.Cells[j].Fill == true {
+				coord := Coord{grid.Cells[j].X, grid.Cells[j].Y}
+				if !inSlice(out, coord) {
+					out = append(out, coord)
+				}
 				break
 			}
 		}
@@ -93,8 +137,6 @@ func populateGrid(grid Grid, coords []Coord) Grid {
 
 
 	for _, value := range coords {
-
-
 		for k, cell := range grid.Cells {
 			if isCell(value, cell, grid.SizeX, grid.SizeY, (k + 1) % grid.XRes == 0, (k + 1) >= len(grid.Cells) - grid.YRes) {
 				out[k].Fill = true
@@ -178,4 +220,14 @@ func calculateGridLimits(coords []Coord) (Coord, Coord) {
 	}
 
 	return leftTop, rightBottom
+}
+
+func inSlice(haystack []Coord, needle Coord) bool {
+	for _, value := range haystack {
+		if value == needle {
+			return true
+		}
+	}
+
+	return false
 }
