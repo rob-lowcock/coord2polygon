@@ -1,35 +1,44 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
+	"github.com/gocarina/gocsv"
+
 	"github.com/kr/pretty"
-	"math"
 )
 
+// Coord is a set of Latitude (X) and Longitude (Y) coordinates.
 type Coord struct {
-	Long, Lat float64
+	Long float64 `csv:"longitude"`
+	Lat  float64 `csv:"latitude"`
 }
 
 // Longitude: Perpendicular to equator (X axis)
 // Latitude: Parallel to equator (Y axis)
 
+// GridCell contains the details of a cell on the grid
 type GridCell struct {
 	X, Y float64
 	Fill bool
 }
 
+// Grid contains a slice of cells, and meta information about the grid
 type Grid struct {
 	Cells        []GridCell
 	SizeX, SizeY float64
-	XRes, YRes         int
+	XRes, YRes   int
 }
 
+// GetCoords returns the outer coordinates for a populated grid
 func (grid Grid) GetCoords() []Coord {
 	var out []Coord
 
 	// Traverse columns left to right
-	for i := 0; i < grid.XRes; i += 1{
+	for i := 0; i < grid.XRes; i++ {
 		// Scan down the columns
-		for j := i; j < len(grid.Cells)/2; j += grid.XRes  {
+		for j := i; j < len(grid.Cells)/2; j += grid.XRes {
 			if grid.Cells[j].Fill == true {
 				out = append(out, Coord{grid.Cells[j].X, grid.Cells[j].Y})
 				break
@@ -38,7 +47,7 @@ func (grid Grid) GetCoords() []Coord {
 	}
 
 	// Traverse the rows top to bottom
-	for i := 0; i < grid.YRes; i += 1 {
+	for i := 0; i < grid.YRes; i++ {
 		// Scan backwards through the rows
 		limit := (i * grid.XRes) + (grid.XRes / 2)
 
@@ -54,7 +63,7 @@ func (grid Grid) GetCoords() []Coord {
 	}
 
 	// Traverse the columns right to left
-	for i := len(grid.Cells) - 1; i >= len(grid.Cells) - grid.XRes; i-- {
+	for i := len(grid.Cells) - 1; i >= len(grid.Cells)-grid.XRes; i-- {
 		// Scan the columns bottom to top
 		for j := i; j > i/2; j -= grid.XRes {
 			if grid.Cells[j].Fill == true {
@@ -66,11 +75,11 @@ func (grid Grid) GetCoords() []Coord {
 			}
 		}
 	}
-	
+
 	// Finally, traverse the rows bottom to top
 	for i := len(grid.Cells) - grid.XRes; i >= 0; i -= grid.XRes {
 		// Scan through the rows
-		for j := i; j < i + (grid.XRes/2); j++ {
+		for j := i; j < i+(grid.XRes/2); j++ {
 			if grid.Cells[j].Fill == true {
 				coord := Coord{grid.Cells[j].X, grid.Cells[j].Y}
 				if !inSlice(out, coord) {
@@ -85,44 +94,53 @@ func (grid Grid) GetCoords() []Coord {
 }
 
 func main() {
-	input := []Coord{
-		{4, 1 },
-		{3, 2},
-		{4, 2},
-		{2, 3 },
-		{4, 3 },
-		{5, 4 },
-		{2, 4 },
-		{1, 5 },
-		{6, 5 },
-		{2, 6 },
-		{5, 6 },
-		{1, 9 },
-		{5, 9 },
-		{1, 11 },
-		{3, 11 },
-		{6, 11 },
-		{2, 12 },
-		{5, 12 },
-		{3, 13 },
-		{6, 13 },
-		{4, 13},
-		{4, 15 },
-		{4, 17 },
+	// input := []*Coord{
+	// 	{0.4, 0.1},
+	// 	{0.3, 0.2},
+	// 	{0.4, 0.2},
+	// 	{0.2, 0.3},
+	// 	{0.4, 0.3},
+	// 	{0.5, 0.4},
+	// 	{0.2, 0.4},
+	// 	{0.1, 0.5},
+	// 	{0.6, 0.5},
+	// 	{0.2, 0.6},
+	// 	{0.5, 0.6},
+	// 	{0.1, 0.9},
+	// 	{0.5, 0.9},
+	// 	{0.1, 1.1},
+	// 	{0.3, 1.1},
+	// 	{0.6, 1.1},
+	// 	{0.2, 1.2},
+	// 	{0.5, 1.2},
+	// 	{0.3, 1.3},
+	// 	{0.6, 1.3},
+	// 	{0.4, 1.3},
+	// 	{0.4, 1.5},
+	// 	{0.4, 1.7},
+	// }
+
+	inputFile, err := os.OpenFile("compiled.csv", os.O_RDWR|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+	defer inputFile.Close()
+
+	var input []*Coord
+
+	if err := gocsv.UnmarshalFile(inputFile, &input); err != nil { // Load clients from file
+		panic(err)
 	}
 
-	xRes := 6
-	yRes := 17
+	xRes := 100
+	yRes := 100
 
 	leftTop, rightBottom := calculateGridLimits(input)
 	grid := generateGrid(leftTop, rightBottom, xRes, yRes)
+
 	grid = populateGrid(grid, input)
 
-	pretty.Println(leftTop)
-	pretty.Println(rightBottom)
-
-	pretty.Println("Cells: ----")
-	pretty.Println(grid)
+	debugGrid(grid, xRes)
 
 	coords := grid.GetCoords()
 
@@ -132,13 +150,30 @@ func main() {
 	// 2. Populate grid from coordinates
 	// 3. Calculate extremities
 }
-func populateGrid(grid Grid, coords []Coord) Grid {
-	out := grid.Cells
+func debugGrid(grid Grid, xRes int) {
+	counter := 0
+	printer := ""
+	for _, value := range grid.Cells {
+		if value.Fill {
+			printer = printer + "O"
+		} else {
+			printer = printer + "."
+		}
 
+		counter++
+
+		if counter%xRes == 0 {
+			fmt.Println(printer)
+			printer = ""
+		}
+	}
+}
+func populateGrid(grid Grid, coords []*Coord) Grid {
+	out := grid.Cells
 
 	for _, value := range coords {
 		for k, cell := range grid.Cells {
-			if isCell(value, cell, grid.SizeX, grid.SizeY, (k + 1) % grid.XRes == 0, (k + 1) >= len(grid.Cells) - grid.YRes) {
+			if isCell(*value, cell, grid.SizeX, grid.SizeY, (k+1)%grid.XRes == 0, (k+1) >= len(grid.Cells)-grid.YRes) {
 				out[k].Fill = true
 			}
 		}
@@ -158,33 +193,37 @@ func isCell(coord Coord, cell GridCell, sizeX float64, sizeY float64, endRow, en
 	if endRow {
 		return coord.Long >= cell.X &&
 			coord.Lat >= cell.Y &&
-			coord.Lat < (cell.Y + sizeY)
+			coord.Lat < (cell.Y+sizeY)
 	}
 
 	// If this cell is at the end of a column
 	if endCol {
 		return coord.Long >= cell.X &&
-			coord.Long < (cell.X + sizeX) &&
+			coord.Long < (cell.X+sizeX) &&
 			coord.Lat >= cell.Y
 	}
 
 	return coord.Long >= cell.X &&
-		coord.Long < (cell.X + sizeX) &&
+		coord.Long < (cell.X+sizeX) &&
 		coord.Lat >= cell.Y &&
-		coord.Lat < (cell.Y + sizeY)
+		coord.Lat < (cell.Y+sizeY)
 }
 
 func generateGrid(leftTop Coord, rightBottom Coord, xRes int, yRes int) Grid {
 	var out []GridCell
 
-	sizeX := math.Ceil(rightBottom.Long- leftTop.Long) / float64(xRes)
-	sizeY := math.Ceil(rightBottom.Lat- leftTop.Lat) / float64(yRes)
+	sizeX := (rightBottom.Long - leftTop.Long) / float64(xRes)
+	sizeY := (rightBottom.Lat - leftTop.Lat) / float64(yRes)
 
-	for j := leftTop.Lat; j < float64(yRes); j += sizeY {
-		for i := leftTop.Long; i < float64(xRes); i += sizeX {
+	pretty.Println("Sizes:")
+	pretty.Println(sizeX)
+	pretty.Println(sizeY)
+
+	for j := 0; j < yRes; j++ {
+		for i := 0; i < xRes; i++ {
 			out = append(out, GridCell{
-				X: i,
-				Y: j,
+				X: leftTop.Long + (float64(i) * sizeX),
+				Y: leftTop.Lat + (float64(j) * sizeY),
 			})
 		}
 	}
@@ -193,16 +232,23 @@ func generateGrid(leftTop Coord, rightBottom Coord, xRes int, yRes int) Grid {
 		Cells: out,
 		SizeX: sizeX,
 		SizeY: sizeY,
-		XRes: xRes,
-		YRes: yRes,
+		XRes:  xRes,
+		YRes:  yRes,
 	}
 }
 
-func calculateGridLimits(coords []Coord) (Coord, Coord) {
-	leftTop := coords[0]
-	rightBottom := coords[0]
+func calculateGridLimits(coords []*Coord) (Coord, Coord) {
+	leftTop := Coord{
+		Long: coords[0].Long,
+		Lat:  coords[0].Lat,
+	}
+	rightBottom := Coord{
+		Long: coords[0].Long,
+		Lat:  coords[0].Lat,
+	}
 	for _, value := range coords {
 		if value.Long < leftTop.Long {
+			pretty.Println("New leftTop Long", value.Long)
 			leftTop.Long = value.Long
 		}
 
