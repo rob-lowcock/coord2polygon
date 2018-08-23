@@ -159,3 +159,57 @@ func inSlice(haystack []Coord, needle Coord) bool {
 
 	return false
 }
+
+// TopLimit returns whether a cell should be used when scanning from the top
+func (g Grid) TopLimit(colIndex, rowIndex int) bool {
+	if rowIndex <= g.XRes/2 {
+		if colIndex <= g.YRes/2 {
+			return rowIndex <= colIndex
+		}
+
+		return (g.XRes - colIndex) > rowIndex
+	}
+
+	return false
+}
+
+// RightLimit returns whether a cell should be used when scanning from the right
+func (g Grid) RightLimit(colIndex, rowIndex int) bool {
+	if rowIndex < g.XRes/2 {
+		if colIndex < g.YRes/2 {
+			return false
+		}
+
+		return (g.XRes - (colIndex + 1)) <= rowIndex
+
+	}
+
+	return rowIndex <= colIndex
+}
+
+// BottomLimit returns whether a cell should be used when scanning from the bottom
+func (g Grid) BottomLimit(colIndex, rowIndex int) bool {
+	if rowIndex >= g.XRes/2 {
+		if colIndex >= g.YRes/2 {
+			return rowIndex >= colIndex
+		}
+
+		return (g.XRes - (colIndex + 1)) <= rowIndex
+	}
+
+	return false
+}
+
+// Left returns whether a cell should be used when scanning from the left
+func (g Grid) LeftLimit(colIndex, rowIndex int) bool {
+	if rowIndex > g.XRes/2 {
+		if colIndex > g.YRes/2 {
+			return false
+		}
+
+		return (g.XRes - (colIndex + 1)) >= rowIndex
+
+	}
+
+	return rowIndex >= colIndex
+}

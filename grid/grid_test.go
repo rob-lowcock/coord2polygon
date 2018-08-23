@@ -1,15 +1,14 @@
-package limiters_test
+package grid_test
 
 import (
 	"github.com/kr/pretty"
 	"github.com/rob-lowcock/coord2polygon/grid"
-	"github.com/rob-lowcock/coord2polygon/limiters"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Limiters", func() {
+var _ = Describe("Grid", func() {
 
 	var dummyGrid grid.Grid
 
@@ -132,7 +131,7 @@ var _ = Describe("Limiters", func() {
 		}
 
 		for k, v := range dummyGrid.Cells {
-			Expect(limiters.TopLimit(int(v.X), int(v.Y), dummyGrid)).To(Equal(expected[k]))
+			Expect(dummyGrid.TopLimit(int(v.X), int(v.Y))).To(Equal(expected[k]))
 		}
 	})
 
@@ -146,7 +145,7 @@ var _ = Describe("Limiters", func() {
 		}
 
 		for k, v := range dummyGrid.Cells {
-			Expect(limiters.RightLimit(int(v.X), int(v.Y), dummyGrid)).To(Equal(expected[k]))
+			Expect(dummyGrid.RightLimit(int(v.X), int(v.Y))).To(Equal(expected[k]))
 		}
 	})
 
@@ -160,7 +159,7 @@ var _ = Describe("Limiters", func() {
 		}
 
 		for k, v := range dummyGrid.Cells {
-			Expect(limiters.BottomLimit(int(v.X), int(v.Y), dummyGrid)).To(Equal(expected[k]))
+			Expect(dummyGrid.BottomLimit(int(v.X), int(v.Y))).To(Equal(expected[k]))
 		}
 	})
 
@@ -174,7 +173,7 @@ var _ = Describe("Limiters", func() {
 		}
 
 		for k, v := range dummyGrid.Cells {
-			Expect(limiters.LeftLimit(int(v.X), int(v.Y), dummyGrid)).To(Equal(expected[k]))
+			Expect(dummyGrid.LeftLimit(int(v.X), int(v.Y))).To(Equal(expected[k]))
 		}
 	})
 })
