@@ -33,7 +33,7 @@ func (g Grid) GetCoords() []Coord {
 	// Traverse columns left to right
 	for i := 0; i < g.XRes; i++ {
 		// Scan down the columns
-		for j := i; j < len(g.Cells)/2; j += g.XRes {
+		for j := i; g.TopLimit(i, j); j += g.XRes {
 			if g.Cells[j].Fill == true {
 				out = append(out, Coord{g.Cells[j].X, g.Cells[j].Y})
 				break
@@ -43,10 +43,8 @@ func (g Grid) GetCoords() []Coord {
 
 	// Traverse the rows top to bottom
 	for i := 0; i < g.YRes; i++ {
-		// Scan backwards through the rows
-		limit := (i * g.XRes) + (g.XRes / 2)
 
-		for j := ((i + 1) * g.XRes) - 1; j >= limit; j-- {
+		for j := ((i + 1) * g.XRes) - 1; g.RightLimit(j, i); j-- {
 			if g.Cells[j].Fill == true {
 				coord := Coord{g.Cells[j].X, g.Cells[j].Y}
 				if !inSlice(out, coord) {
@@ -60,7 +58,7 @@ func (g Grid) GetCoords() []Coord {
 	// Traverse the columns right to left
 	for i := len(g.Cells) - 1; i >= len(g.Cells)-g.XRes; i-- {
 		// Scan the columns bottom to top
-		for j := i; j > i/2; j -= g.XRes {
+		for j := i; g.BottomLimit(i, j); j -= g.XRes {
 			if g.Cells[j].Fill == true {
 				coord := Coord{g.Cells[j].X, g.Cells[j].Y}
 				if !inSlice(out, coord) {
